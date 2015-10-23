@@ -27,13 +27,13 @@
 //	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-import Foundation
+import Foundation 
 
 // HACK: For Swift 1.0
 extension qos_class_t {
     
     public var id:Int {
-        return Int(self.value)
+        return Int(self.rawValue)
     }
 }
 
@@ -116,22 +116,22 @@ extension Async { // Static methods
 		dispatch_after(time, queue, _block)
 		return Async(_block)
 	}
-	public static func main(#after: Double, block: dispatch_block_t) -> Async {
+	public static func main(after after: Double, block: dispatch_block_t) -> Async {
 		return Async.after(after, block: block, inQueue: GCD.mainQueue())
 	}
-	public static func userInteractive(#after: Double, block: dispatch_block_t) -> Async {
+	public static func userInteractive(after after: Double, block: dispatch_block_t) -> Async {
 		return Async.after(after, block: block, inQueue: GCD.userInteractiveQueue())
 	}
-	public static func userInitiated(#after: Double, block: dispatch_block_t) -> Async {
+	public static func userInitiated(after after: Double, block: dispatch_block_t) -> Async {
 		return Async.after(after, block: block, inQueue: GCD.userInitiatedQueue())
 	}
-	static func utility(#after: Double, block: dispatch_block_t) -> Async {
+	static func utility(after after: Double, block: dispatch_block_t) -> Async {
 		return Async.after(after, block: block, inQueue: GCD.utilityQueue())
 	}
-	public static func background(#after: Double, block: dispatch_block_t) -> Async {
+	public static func background(after after: Double, block: dispatch_block_t) -> Async {
 		return Async.after(after, block: block, inQueue: GCD.backgroundQueue())
 	}
-	public static func customQueue(#after: Double, queue: dispatch_queue_t, block: dispatch_block_t) -> Async {
+	public static func customQueue(after after: Double, queue: dispatch_queue_t, block: dispatch_block_t) -> Async {
 		return Async.after(after, block: block, inQueue: queue)
 	}
 }
@@ -192,22 +192,22 @@ extension Async { // Regualar methods matching static once
 		// Wrap block in a struct since dispatch_block_t can't be extended
 		return Async(_chainingBlock)
 	}
-	public func main(#after: Double, block: dispatch_block_t) -> Async {
+	public func main(after after: Double, block: dispatch_block_t) -> Async {
 		return self.after(after, block: block, runInQueue: GCD.mainQueue())
 	}
-	public func userInteractive(#after: Double, block: dispatch_block_t) -> Async {
+	public func userInteractive(after after: Double, block: dispatch_block_t) -> Async {
 		return self.after(after, block: block, runInQueue: GCD.userInteractiveQueue())
 	}
-	public func userInitiated(#after: Double, block: dispatch_block_t) -> Async {
+	public func userInitiated(after after: Double, block: dispatch_block_t) -> Async {
 		return self.after(after, block: block, runInQueue: GCD.userInitiatedQueue())
 	}
-	func utility(#after: Double, block: dispatch_block_t) -> Async {
+	func utility(after after: Double, block: dispatch_block_t) -> Async {
 		return self.after(after, block: block, runInQueue: GCD.utilityQueue())
 	}
-	public func background(#after: Double, block: dispatch_block_t) -> Async {
+	public func background(after after: Double, block: dispatch_block_t) -> Async {
 		return self.after(after, block: block, runInQueue: GCD.backgroundQueue())
 	}
-	public func customQueue(#after: Double, queue: dispatch_queue_t, block: dispatch_block_t) -> Async {
+	public func customQueue(after after: Double, queue: dispatch_queue_t, block: dispatch_block_t) -> Async {
 		return self.after(after, block: block, runInQueue: queue)
 	}
 
@@ -238,8 +238,8 @@ public class AsyncIO<A, R> {
     
     private var block: dispatch_block_t?
     
-    private typealias ReturnType = R
-    private typealias ArgumentType = A
+    public typealias ReturnType = R
+    public typealias ArgumentType = A
     
     private var _arguments: ArgumentType?
     private var _return: ReturnType?
@@ -250,9 +250,9 @@ public class AsyncIO<A, R> {
         let voidInOutBlock: () -> () = {
             if let arguments = self._arguments {
                 self._return = inBlock(arguments)
-                println(": \(self._return)")
+                print(": \(self._return)")
             } else {
-                println("| \(arguments)")
+                print("| \(arguments)")
                 self._return = nil
             }
         }
@@ -271,7 +271,7 @@ public class AsyncIO<A, R> {
             
             if let arguments = self._arguments {
                 self._return = inBlock(arguments)
-                println(": \(self._return)")
+                print(": \(self._return)")
             } else {
                 assert(false, "No return value from previous")
             }
@@ -283,7 +283,7 @@ public class AsyncIO<A, R> {
         self.block = cancellableVoidInOutBlock
     }
     
-    private func boost<T>(block inBlock: A -> R, chainTo: AsyncO<ArgumentType>) {
+    private func boost(block inBlock: A -> R, chainTo: AsyncO<ArgumentType>) {
         
         let voidInOutBlock: () -> () = {
             let returnFromPrevious = chainTo._return
@@ -291,7 +291,7 @@ public class AsyncIO<A, R> {
             
             if let arguments = self._arguments {
                 self._return = inBlock(arguments)
-                println(": \(self._return)")
+                print(": \(self._return)")
             } else {
                 assert(false, "No return value from previous")
             }
@@ -310,7 +310,7 @@ public class AsyncIO<A, R> {
         let async = AsyncIO<A, R>()
         async.boost(block: block, arguments: arguments)
         // Add block to queue
-        dispatch_async(queue, async.block)
+        dispatch_async(queue, async.block!)
 
         return async
     }
@@ -331,7 +331,7 @@ public class AsyncIO<A, R> {
         let async = AsyncIO<ReturnType, T>()
         async.boost(block: chainingBlock, chainTo: self)
         // Add block to queue
-        dispatch_async(queue, async.block)
+        dispatch_async(queue, async.block!)
         
         return async
     }
@@ -346,7 +346,7 @@ public class AsyncO<R> {
     
     private var block: dispatch_block_t?
     
-    private typealias ReturnType = R
+    public typealias ReturnType = R
     
     private var _return: ReturnType?
     
@@ -382,7 +382,7 @@ public class AsyncO<R> {
         let async = AsyncO<R>()
         async.boost(block: block)
         // Add block to queue
-        dispatch_async(queue, async.block)
+        dispatch_async(queue, async.block!)
         
         return async
     }
@@ -399,7 +399,7 @@ public class AsyncO<R> {
         let async = AsyncIO<ReturnType, T>()
         async.boost(block: chainingBlock, chainTo: self)
         // Add block to queue
-        dispatch_async(queue, async.block)
+        dispatch_async(queue, async.block!)
         
         return async
     }
